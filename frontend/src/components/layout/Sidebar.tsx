@@ -52,15 +52,15 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[80px] flex-col items-center border-r border-[#d9d9d9] bg-white md:flex">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[80px] flex-col items-center border-r border-primary bg-bg md:flex">
       <div className="flex flex-1 flex-col items-center justify-end gap-4 pb-6">
         {navItems.map((item) => (
           <Link
             key={item.label}
             href={item.href}
             className={cn(
-              "flex size-10 items-center justify-center rounded-[15px] text-gray-400 transition-colors hover:text-black",
-              pathname.startsWith(item.href) && "text-black"
+              "flex size-10 items-center justify-center rounded-[15px] text-gray-400 transition-colors hover:text-text",
+              pathname.startsWith(item.href) && "text-accent"
             )}
             title={item.label}
           >

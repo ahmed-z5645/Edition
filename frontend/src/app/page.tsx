@@ -21,13 +21,13 @@ export default async function LandingPage() {
       <div className="mt-8 flex gap-4">
         <Link
           href="/signup"
-          className="rounded-[15px] bg-black px-8 py-3 text-sm font-medium text-white hover:bg-gray-900"
+          className="rounded-[15px] bg-accent px-8 py-3 text-sm font-medium text-white hover:bg-accent/90"
         >
           Get started
         </Link>
         <Link
           href="/login"
-          className="rounded-[15px] border border-[#d9d9d9] px-8 py-3 text-sm font-medium hover:bg-gray-50"
+          className="rounded-[15px] border border-primary px-8 py-3 text-sm font-medium hover:bg-primary/50"
         >
           Sign in
         </Link>

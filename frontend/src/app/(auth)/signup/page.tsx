@@ -79,7 +79,7 @@ export default function SignupPage() {
             onChange={(e) => setUsername(e.target.value)}
             required
             placeholder="yourname"
-            className="mt-1 block w-full rounded-[15px] border border-[#d9d9d9] px-4 py-3 text-sm focus:border-black focus:outline-none"
+            className="mt-1 block w-full rounded-[15px] border border-primary px-4 py-3 text-sm focus:border-accent focus:outline-none"
           />
         </div>
 
@@ -93,7 +93,7 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="mt-1 block w-full rounded-[15px] border border-[#d9d9d9] px-4 py-3 text-sm focus:border-black focus:outline-none"
+            className="mt-1 block w-full rounded-[15px] border border-primary px-4 py-3 text-sm focus:border-accent focus:outline-none"
           />
         </div>
 
@@ -108,14 +108,14 @@ export default function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="mt-1 block w-full rounded-[15px] border border-[#d9d9d9] px-4 py-3 text-sm focus:border-black focus:outline-none"
+            className="mt-1 block w-full rounded-[15px] border border-primary px-4 py-3 text-sm focus:border-accent focus:outline-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-[15px] bg-black py-3 text-sm font-medium text-white hover:bg-gray-900 disabled:opacity-50"
+          className="w-full rounded-[15px] bg-accent py-3 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
         >
           {loading ? "Creating account..." : "Create account"}
         </button>
@@ -123,7 +123,7 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{" "}
-        <Link href="/login" className="text-black underline">
+        <Link href="/login" className="text-accent underline">
           Sign in
         </Link>
       </p>

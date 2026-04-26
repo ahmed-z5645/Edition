@@ -19,14 +19,14 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-bg">
       <Sidebar />
       <div className="md:ml-[80px]">
-        <header className="flex h-[80px] items-center justify-between border-b border-[#d9d9d9] px-6 md:px-10">
+        <header className="flex h-[80px] items-center justify-between border-b border-primary px-6 md:px-10">
           <div className="flex items-center gap-3">
-            <div className="size-[50px] rounded-full bg-[#d9d9d9]" />
+            <div className="size-[35px] rounded-full bg-primary" />
             <span className="text-[25px]">
-              {user.user_metadata?.username || "scrapp"}
+              <h1>@{user.user_metadata?.username || "scrapp"}</h1>
             </span>
           </div>
           <CountdownPill />

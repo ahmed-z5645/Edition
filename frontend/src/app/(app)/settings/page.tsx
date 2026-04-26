@@ -22,7 +22,7 @@ export default function SettingsPage() {
         </p>
         <button
           onClick={handleSignOut}
-          className="rounded-[15px] border border-[#d9d9d9] px-6 py-3 text-sm hover:bg-gray-50"
+          className="rounded-[15px] border border-primary px-6 py-3 text-sm hover:bg-primary/50"
         >
           Sign out
         </button>

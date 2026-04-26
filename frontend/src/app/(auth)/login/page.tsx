@@ -59,7 +59,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="mt-1 block w-full rounded-[15px] border border-[#d9d9d9] px-4 py-3 text-sm focus:border-black focus:outline-none"
+            className="mt-1 block w-full rounded-[15px] border border-primary px-4 py-3 text-sm focus:border-accent focus:outline-none"
           />
         </div>
 
@@ -73,14 +73,14 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="mt-1 block w-full rounded-[15px] border border-[#d9d9d9] px-4 py-3 text-sm focus:border-black focus:outline-none"
+            className="mt-1 block w-full rounded-[15px] border border-primary px-4 py-3 text-sm focus:border-accent focus:outline-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-[15px] bg-black py-3 text-sm font-medium text-white hover:bg-gray-900 disabled:opacity-50"
+          className="w-full rounded-[15px] bg-accent py-3 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
@@ -88,7 +88,7 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-gray-500">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="text-black underline">
+        <Link href="/signup" className="text-accent underline">
           Sign up
         </Link>
       </p>

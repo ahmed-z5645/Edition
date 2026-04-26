@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-satoshi: "Satoshi", sans-serif;
-  --font-cabinet: "Cabinet Grotesk", sans-serif;
+  --font-satoshi: var(--font-satoshi);
+  --font-cabinet: var(--font-cabinet);
+  --color-bg: #eff1f3;
+  --color-text: #223843;
+  --color-primary: #dbd3d8;
+  --color-secondary: #d8b4a0;
+  --color-accent: #fb5012;
 }
 
 body {
-  background: #ffffff;
-  color: #000000;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 h1, h2, h3 {

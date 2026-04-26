@@ -9,7 +9,7 @@ export default function FeedPage() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="aspect-square rounded-[15px] bg-[#d9d9d9]"
+            className="aspect-square rounded-[15px] bg-primary"
           />
         ))}
       </div>

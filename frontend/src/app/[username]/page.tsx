@@ -57,7 +57,7 @@ export default async function PublicProfilePage({
   if (!profile.is_public) {
     return (
       <div className="py-20 text-center">
-        <div className="mx-auto mb-4 size-16 rounded-full bg-[#d9d9d9]" />
+        <div className="mx-auto mb-4 size-16 rounded-full bg-primary" />
         <h1 className="text-2xl font-bold">@{profile.username}</h1>
         <p className="mt-2 text-gray-500">This profile is private</p>
       </div>
@@ -67,7 +67,7 @@ export default async function PublicProfilePage({
   return (
     <div>
       <div className="mb-8 flex items-center gap-4">
-        <div className="size-16 rounded-full bg-[#d9d9d9]" />
+        <div className="size-16 rounded-full bg-primary" />
         <div>
           <h1 className="text-2xl font-bold">
             {profile.display_name || profile.username}

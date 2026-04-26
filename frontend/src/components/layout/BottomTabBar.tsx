@@ -42,7 +42,7 @@ export function BottomTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#d9d9d9] bg-white md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-primary bg-bg md:hidden">
       <div className="flex h-[80px] items-center justify-around">
         {tabs.map((tab) => (
           <Link
@@ -50,7 +50,7 @@ export function BottomTabBar() {
             href={tab.href}
             className={cn(
               "flex size-10 items-center justify-center text-gray-400 transition-colors",
-              pathname.startsWith(tab.href) && "text-black"
+              pathname.startsWith(tab.href) && "text-accent"
             )}
           >
             {tab.icon}

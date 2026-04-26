@@ -30,7 +30,7 @@ export function CountdownPill() {
   if (!text) return null;
 
   return (
-    <div className="hidden rounded-[15px] bg-[#d9d9d9] px-6 py-3 text-[15px] font-normal md:block">
+    <div className="hidden rounded-[15px] bg-secondary px-6 py-3 text-[15px] font-normal md:block">
       {text}
     </div>
   );
