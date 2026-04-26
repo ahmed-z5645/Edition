@@ -1,46 +1,50 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { forwardRef, useRef, useEffect, useState, useImperativeHandle } from "react";
 
 interface BentoGridProps {
   children: React.ReactNode;
   className?: string;
 }
 
-export function BentoGrid({ children, className }: BentoGridProps) {
-  const gridRef = useRef<HTMLDivElement>(null);
-  const [rowHeight, setRowHeight] = useState(0);
+export const BentoGrid = forwardRef<HTMLDivElement, BentoGridProps>(
+  function BentoGrid({ children, className }, ref) {
+    const gridRef = useRef<HTMLDivElement>(null);
+    const [rowHeight, setRowHeight] = useState(0);
 
-  useEffect(() => {
-    function updateRowHeight() {
-      if (!gridRef.current) return;
-      const gridWidth = gridRef.current.clientWidth;
-      const gap = 16;
-      const colWidth = (gridWidth - gap * 3) / 4;
-      setRowHeight(colWidth / 2);
-    }
+    useImperativeHandle(ref, () => gridRef.current!);
 
-    updateRowHeight();
-    const observer = new ResizeObserver(updateRowHeight);
-    if (gridRef.current) observer.observe(gridRef.current);
-    return () => observer.disconnect();
-  }, []);
+    useEffect(() => {
+      function updateRowHeight() {
+        if (!gridRef.current) return;
+        const gridWidth = gridRef.current.clientWidth;
+        const gap = 16;
+        const colWidth = (gridWidth - gap * 3) / 4;
+        setRowHeight(colWidth / 2);
+      }
 
-  return (
-    <div
-      ref={gridRef}
-      className={className}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gridAutoRows: rowHeight || "auto",
-        gap: 16,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
+      updateRowHeight();
+      const observer = new ResizeObserver(updateRowHeight);
+      if (gridRef.current) observer.observe(gridRef.current);
+      return () => observer.disconnect();
+    }, []);
+
+    return (
+      <div
+        ref={gridRef}
+        className={className}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gridAutoRows: rowHeight || "auto",
+          gap: 16,
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+);
 
 export function BentoGridMobile({ children, className }: BentoGridProps) {
   return (

@@ -40,8 +40,8 @@ export function BentoTileMobile({
     <div
       className={`overflow-hidden rounded-[15px] bg-bg ${className ?? ""}`}
       style={{
-        gridColumn: `span ${mobileLayout.colSpan}`,
-        order: mobileLayout.order,
+        gridColumn: `${mobileLayout.colStart} / span ${mobileLayout.colSpan}`,
+        gridRow: `${mobileLayout.rowStart} / span ${mobileLayout.rowSpan}`,
       }}
     >
       {children}

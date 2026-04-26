@@ -6,6 +6,8 @@ export interface DesktopLayout {
 }
 
 export interface MobileLayout {
-  order: number;
-  colSpan: 1 | 2;
+  colStart: number;
+  colSpan: number;
+  rowStart: number;
+  rowSpan: number;
 }

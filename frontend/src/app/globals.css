@@ -15,6 +15,11 @@ body {
   color: var(--color-text);
 }
 
+::selection {
+  color: #fb5012;
+  background: rgb(251 80 18 / 0.1);
+}
+
 h1, h2, h3 {
   font-family: var(--font-cabinet);
 }

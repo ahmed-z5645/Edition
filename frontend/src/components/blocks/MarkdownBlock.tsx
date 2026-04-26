@@ -1,5 +1,8 @@
 "use client";
 
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { MarkdownBlock as MarkdownBlockType, Block } from "@/lib/types/blocks";
@@ -18,15 +21,27 @@ export function MarkdownBlock({
   isEditing,
   onUpdate,
 }: MarkdownBlockProps) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: "Start writing..." }),
+    ],
+    content: block.content.markdown,
+    editable: isEditing,
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      onUpdate?.({ markdown: editor.getText() });
+    },
+    editorProps: {
+      attributes: {
+        class: "h-full outline-none prose prose-sm max-w-none",
+      },
+    },
+  });
+
   if (isEditing) {
     return (
       <div className="relative h-full p-4">
-        <textarea
-          className="h-full w-full resize-none bg-transparent text-sm outline-none"
-          value={block.content.markdown}
-          onChange={(e) => onUpdate?.({ markdown: e.target.value })}
-          placeholder="Start writing..."
-        />
         {childBlocks.map((child) => (
           <div
             key={child.id}
@@ -41,6 +56,7 @@ export function MarkdownBlock({
             <BlockRenderer block={child} isEditing={isEditing} />
           </div>
         ))}
+        <EditorContent editor={editor} className="h-full text-sm" />
       </div>
     );
   }

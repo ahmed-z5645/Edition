@@ -1,5 +1,19 @@
 "use client";
 
+function getSpotifyEmbedUrl(url: string): string | null {
+  const match = url.match(
+    /open\.spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/
+  );
+  if (!match) return null;
+  return `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator&theme=0`;
+}
+
+function getStravaEmbedUrl(url: string): string | null {
+  const match = url.match(/strava\.com\/activities\/(\d+)/);
+  if (!match) return null;
+  return `https://strava-embeds.com/activity/${match[1]}`;
+}
+
 interface EmbedBlockProps {
   url: string;
   label: string;
@@ -33,8 +47,23 @@ export function EmbedBlock({ url, label, isEditing, onUpdate }: EmbedBlockProps)
     );
   }
 
+  const spotifyEmbed = label === "Spotify" ? getSpotifyEmbedUrl(url) : null;
+  const stravaEmbed = label === "Strava" ? getStravaEmbedUrl(url) : null;
+  const embedUrl = spotifyEmbed || stravaEmbed;
+
+  if (embedUrl) {
+    return (
+      <iframe
+        src={embedUrl}
+        className="h-full w-full rounded-[15px]"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+      />
+    );
+  }
+
   return (
-    <div className="flex h-full items-center justify-center p-4">
+    <div className="flex h-full flex-col items-center justify-center gap-2 p-4">
       <a
         href={url}
         target="_blank"
@@ -43,6 +72,14 @@ export function EmbedBlock({ url, label, isEditing, onUpdate }: EmbedBlockProps)
       >
         Open in {label}
       </a>
+      {isEditing && (
+        <button
+          onClick={() => onUpdate?.({ url: "" })}
+          className="text-xs text-text/40 hover:text-accent"
+        >
+          Change URL
+        </button>
+      )}
     </div>
   );
 }

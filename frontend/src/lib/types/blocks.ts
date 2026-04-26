@@ -76,6 +76,8 @@ export interface Post {
   is_published: boolean;
   is_late: boolean;
   word_count: number;
+  cover_color: string | null;
+  tags: string[];
   published_at: string | null;
   created_at: string;
   updated_at: string;

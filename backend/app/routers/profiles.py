@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from supabase import Client
 from app.deps import get_db, get_authenticated_user
 from app.models.profiles import ProfileResponse, ProfileUpdate
+from app.auth import get_current_user as extract_user
 
 router = APIRouter(prefix="/api/profiles", tags=["profiles"])
 
@@ -63,3 +64,46 @@ async def get_public_profile(
     if not result.data:
         raise HTTPException(status_code=404, detail="Profile not found")
     return result.data
+
+
+@router.get("/{user_id}/posts")
+async def get_public_user_posts(
+    user_id: str,
+    request: Request,
+    db: Client = Depends(get_db),
+):
+    caller_id = None
+    try:
+        caller_id = await extract_user(request)
+    except Exception:
+        pass
+
+    is_owner = caller_id == user_id
+    if not is_owner:
+        profile = db.table("profiles").select("is_public").eq("id", user_id).single().execute()
+        if not profile.data or not profile.data.get("is_public"):
+            raise HTTPException(status_code=403, detail="Profile is private")
+
+    posts = (
+        db.table("posts")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("is_published", True)
+        .order("year", desc=True)
+        .order("week_number", desc=True)
+        .execute()
+    )
+
+    result = []
+    for post in posts.data or []:
+        blocks = (
+            db.table("blocks")
+            .select("*")
+            .eq("post_id", post["id"])
+            .order("sort_order")
+            .execute()
+        )
+        post["blocks"] = blocks.data or []
+        result.append(post)
+
+    return {"posts": result}

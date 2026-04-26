@@ -1,3 +1,5 @@
+import { ProfileClient } from "./ProfileClient";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface Profile {
@@ -35,7 +37,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicProfilePage({
+export default async function ProfilePage({
   params,
 }: {
   params: Promise<{ username: string }>;
@@ -46,37 +48,15 @@ export default async function PublicProfilePage({
   if (!profile) {
     return (
       <div className="py-20 text-center">
-        <h1 className="text-2xl font-bold">User not found</h1>
-        <p className="mt-2 text-gray-500">
+        <h1 className="font-[family-name:var(--font-cabinet)] text-2xl font-bold">
+          User not found
+        </h1>
+        <p className="mt-2 text-sm text-text/40">
           No profile exists for @{username}
         </p>
       </div>
     );
   }
 
-  if (!profile.is_public) {
-    return (
-      <div className="py-20 text-center">
-        <div className="mx-auto mb-4 size-16 rounded-full bg-primary" />
-        <h1 className="text-2xl font-bold">@{profile.username}</h1>
-        <p className="mt-2 text-gray-500">This profile is private</p>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="mb-8 flex items-center gap-4">
-        <div className="size-16 rounded-full bg-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">
-            {profile.display_name || profile.username}
-          </h1>
-          <p className="text-sm text-gray-500">@{profile.username}</p>
-          {profile.bio && <p className="mt-1 text-sm">{profile.bio}</p>}
-        </div>
-      </div>
-      <p className="text-gray-500">No posts yet.</p>
-    </div>
-  );
+  return <ProfileClient profile={profile} />;
 }
