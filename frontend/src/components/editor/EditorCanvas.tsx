@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import type { Block, BlockType, Post } from "@/lib/types/blocks";
 import type { DesktopLayout } from "@/lib/types/grid";
 import { BentoGrid } from "@/components/bento/BentoGrid";
@@ -44,7 +44,9 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
   const [title, setTitle] = useState(post.title || "");
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [isPublishing, setIsPublishing] = useState(false);
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const dirtyBlocksRef = useRef<Set<string>>(new Set());
 
   const wordCount = useMemo(() => {
     return blocks
@@ -66,19 +68,38 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
     return map;
   }, [blocks]);
 
-  const debouncedSave = useCallback(
-    (blockId: string, content: Record<string, unknown>) => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(async () => {
-        try {
-          await api.put(`/api/blocks/${blockId}`, { content });
-        } catch (e) {
-          console.error("Failed to save block:", e);
+  const saveAll = useCallback(async () => {
+    if (!hasUnsavedChanges) return;
+    setIsSaving(true);
+    try {
+      const promises: Promise<unknown>[] = [];
+      promises.push(api.put(`/api/posts/${post.id}`, { title }));
+      for (const blockId of dirtyBlocksRef.current) {
+        const block = blocks.find((b) => b.id === blockId);
+        if (block) {
+          promises.push(api.put(`/api/blocks/${blockId}`, { content: block.content }));
         }
-      }, 800);
-    },
-    []
-  );
+      }
+      await Promise.all(promises);
+      dirtyBlocksRef.current.clear();
+      setHasUnsavedChanges(false);
+    } catch (e) {
+      console.error("Failed to save:", e);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [hasUnsavedChanges, title, blocks, post.id]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        saveAll();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [saveAll]);
 
   const handleUpdateBlock = useCallback(
     (blockId: string, content: Record<string, unknown>) => {
@@ -87,9 +108,10 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
           b.id === blockId ? ({ ...b, content } as Block) : b
         )
       );
-      debouncedSave(blockId, content);
+      dirtyBlocksRef.current.add(blockId);
+      setHasUnsavedChanges(true);
     },
-    [debouncedSave]
+    []
   );
 
   async function handleAddBlock(type: BlockType) {
@@ -110,22 +132,21 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
     }
   }
 
-  async function handleTitleChange(value: string) {
+  function handleTitleChange(value: string) {
     setTitle(value);
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async () => {
-      try {
-        await api.put(`/api/posts/${post.id}`, { title: value });
-      } catch (e) {
-        console.error("Failed to save title:", e);
-      }
-    }, 800);
+    setHasUnsavedChanges(true);
   }
 
   async function handlePublish() {
     setIsPublishing(true);
     try {
       await api.put(`/api/posts/${post.id}`, { title });
+      for (const blockId of dirtyBlocksRef.current) {
+        const block = blocks.find((b) => b.id === blockId);
+        if (block) {
+          await api.put(`/api/blocks/${blockId}`, { content: block.content });
+        }
+      }
       await api.post(`/api/posts/${post.id}/publish`);
       window.location.href = "/feed";
     } catch (e) {
@@ -138,6 +159,7 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
     try {
       await api.delete(`/api/blocks/${blockId}`);
       setBlocks((prev) => prev.filter((b) => b.id !== blockId));
+      dirtyBlocksRef.current.delete(blockId);
     } catch (e) {
       console.error("Failed to delete block:", e);
     }
@@ -146,7 +168,15 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <WordCounter count={wordCount} />
+        <div className="flex items-center gap-4">
+          <WordCounter count={wordCount} />
+          {hasUnsavedChanges && (
+            <span className="text-xs text-text/40">Unsaved changes — Ctrl+S to save</span>
+          )}
+          {isSaving && (
+            <span className="text-xs text-text/40">Saving...</span>
+          )}
+        </div>
         <PublishButton
           canPublish={canPublish}
           isPublishing={isPublishing}

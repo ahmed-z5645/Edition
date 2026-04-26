@@ -12,7 +12,7 @@ export function TitleInput({ value, onChange }: TitleInputProps) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder="Title your week..."
-      className="w-full bg-transparent text-[48px] font-bold leading-tight outline-none placeholder:text-text/20 md:text-[64px]"
+      className="w-full bg-transparent font-[family-name:var(--font-cabinet)] text-[48px] font-bold leading-tight outline-none placeholder:text-text/20 md:text-[64px]"
     />
   );
 }
