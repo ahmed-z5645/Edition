@@ -65,17 +65,32 @@ async def get_current_week_post(
     return result.data[0]
 
 
-@router.get("/{post_id}", response_model=PostResponse)
+@router.get("/{post_id}")
 async def get_post(
     post_id: str,
     user_id: str = Depends(get_authenticated_user),
     db: Client = Depends(get_db),
 ):
-    result = db.table("posts").select("*").eq("id", post_id).single().execute()
+    result = (
+        db.table("posts")
+        .select("*, profiles!posts_user_id_fkey(username, display_name, avatar_url)")
+        .eq("id", post_id)
+        .single()
+        .execute()
+    )
     if not result.data:
         raise HTTPException(status_code=404, detail="Post not found")
     if result.data["user_id"] != user_id and not result.data["is_published"]:
         raise HTTPException(status_code=403, detail="Not authorized")
+
+    blocks = (
+        db.table("blocks")
+        .select("*")
+        .eq("post_id", post_id)
+        .order("sort_order")
+        .execute()
+    )
+    result.data["blocks"] = blocks.data or []
     return result.data
 
 

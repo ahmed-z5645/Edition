@@ -1,13 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
-import { FeedCard } from "@/components/feed/FeedCard";
 import { FeedLockGate } from "@/components/feed/FeedLockGate";
+import { LateBadge } from "@/components/feed/LateBadge";
+
+interface FeedPost {
+  id: string;
+  title: string | null;
+  cover_color: string | null;
+  is_late: boolean;
+  profiles?: {
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+}
 
 interface FeedResponse {
   locked: boolean;
-  posts?: Array<Record<string, unknown>>;
+  posts?: FeedPost[];
   post_count?: number;
   week: number;
   year: number;
@@ -58,11 +71,41 @@ export default function FeedPage() {
       {feed.locked ? (
         <FeedLockGate postCount={feed.post_count || 0} />
       ) : feed.posts && feed.posts.length > 0 ? (
-        <div className="space-y-10">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {feed.posts.map((post: any) => (
-            <FeedCard key={post.id} post={post} />
-          ))}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {feed.posts.map((post) => {
+            const textColor =
+              post.cover_color === "#223843" ? "#eff1f3" : "#223843";
+            return (
+              <Link
+                key={post.id}
+                href={`/post/${post.id}`}
+                className="group col-span-2 block"
+              >
+                <div
+                  className="flex aspect-[2/1] flex-col justify-end rounded-[15px] p-5 transition-shadow hover:shadow-lg"
+                  style={{ backgroundColor: post.cover_color || "#d9d9d9" }}
+                >
+                  <div className="flex items-center gap-2">
+                    {post.profiles?.username && (
+                      <span
+                        className="text-xs font-medium"
+                        style={{ color: textColor, opacity: 0.6 }}
+                      >
+                        @{post.profiles.username}
+                      </span>
+                    )}
+                    {post.is_late && <LateBadge />}
+                  </div>
+                  <h3
+                    className="mt-1 font-[family-name:var(--font-cabinet)] text-lg font-bold leading-tight transition-opacity group-hover:opacity-80"
+                    style={{ color: textColor }}
+                  >
+                    {post.title}
+                  </h3>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-[15px] border border-primary py-20">

@@ -1,0 +1,115 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { api } from "@/lib/api";
+import type { Block, Post } from "@/lib/types/blocks";
+import { BentoGrid } from "@/components/bento/BentoGrid";
+import { BentoTile } from "@/components/bento/BentoTile";
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { LateBadge } from "@/components/feed/LateBadge";
+
+interface FullPost extends Post {
+  blocks: Block[];
+  profiles?: {
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
+export default function PostPage() {
+  const { postId } = useParams<{ postId: string }>();
+  const [post, setPost] = useState<FullPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .get<FullPost>(`/api/posts/${postId}`)
+      .then(setPost)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  const topLevelBlocks = useMemo(
+    () => (post?.blocks || []).filter((b) => !b.parent_block_id),
+    [post?.blocks]
+  );
+
+  const childBlocksMap = useMemo(() => {
+    const map: Record<string, Block[]> = {};
+    for (const b of post?.blocks || []) {
+      if (b.parent_block_id) {
+        if (!map[b.parent_block_id]) map[b.parent_block_id] = [];
+        map[b.parent_block_id].push(b);
+      }
+    }
+    return map;
+  }, [post?.blocks]);
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="size-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="space-y-4 py-20 text-center">
+        <h1 className="font-[family-name:var(--font-cabinet)] text-2xl font-bold">
+          Post not found
+        </h1>
+        <Link href="/feed" className="text-sm text-accent underline">
+          Back to feed
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href="/feed"
+        className="inline-block text-sm text-text/40 hover:text-text/60"
+      >
+        &larr; Back to feed
+      </Link>
+
+      <h1 className="w-full font-[family-name:var(--font-cabinet)] text-[48px] font-bold leading-tight md:text-[64px]">
+        {post.title}
+      </h1>
+
+      <div className="flex items-center gap-3">
+        {post.profiles?.username && (
+          <span className="text-sm text-text/40">
+            @{post.profiles.username}
+          </span>
+        )}
+        {post.is_late && <LateBadge />}
+        <span className="text-sm text-text/40">
+          Week {post.week_number}, {post.year}
+        </span>
+      </div>
+
+      <BentoGrid>
+        {topLevelBlocks.map((block) => (
+          <BentoTile
+            key={block.id}
+            desktopLayout={block.grid_layout_desktop}
+            mobileLayout={block.grid_layout_mobile}
+            className="border border-primary"
+          >
+            <BlockRenderer
+              block={block}
+              childBlocks={childBlocksMap[block.id]}
+            />
+          </BentoTile>
+        ))}
+      </BentoGrid>
+    </div>
+  );
+}
