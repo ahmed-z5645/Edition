@@ -67,6 +67,8 @@ export function DraggableTile({
       const startY = e.clientY;
       const startColSpan = desktopLayout.colSpan;
       const startRowSpan = desktopLayout.rowSpan;
+      let lastColSpan = startColSpan;
+      let lastRowSpan = startRowSpan;
       const gap = 16;
 
       function onMove(ev: PointerEvent) {
@@ -76,7 +78,9 @@ export function DraggableTile({
         const rowDelta = Math.round(dy / (gridMeta.rowHeight + gap));
         const newColSpan = Math.max(1, Math.min(5 - desktopLayout.colStart, startColSpan + colDelta));
         const newRowSpan = Math.max(1, startRowSpan + rowDelta);
-        if (newColSpan !== desktopLayout.colSpan || newRowSpan !== desktopLayout.rowSpan) {
+        if (newColSpan !== lastColSpan || newRowSpan !== lastRowSpan) {
+          lastColSpan = newColSpan;
+          lastRowSpan = newRowSpan;
           onResize(id, { colSpan: newColSpan, rowSpan: newRowSpan });
         }
       }

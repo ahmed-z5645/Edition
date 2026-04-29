@@ -64,6 +64,8 @@ export function MobileDraggableTile({
       const startY = e.clientY;
       const startColSpan = mobileLayout.colSpan;
       const startRowSpan = mobileLayout.rowSpan;
+      let lastColSpan = startColSpan;
+      let lastRowSpan = startRowSpan;
       const gap = 12;
 
       function onMove(ev: PointerEvent) {
@@ -73,7 +75,9 @@ export function MobileDraggableTile({
         const rowDelta = Math.round(dy / (gridMeta.rowHeight + gap));
         const newColSpan = Math.max(1, Math.min(3 - mobileLayout.colStart, startColSpan + colDelta));
         const newRowSpan = Math.max(1, startRowSpan + rowDelta);
-        if (newColSpan !== mobileLayout.colSpan || newRowSpan !== mobileLayout.rowSpan) {
+        if (newColSpan !== lastColSpan || newRowSpan !== lastRowSpan) {
+          lastColSpan = newColSpan;
+          lastRowSpan = newRowSpan;
           onResize(id, { colSpan: newColSpan, rowSpan: newRowSpan });
         }
       }
