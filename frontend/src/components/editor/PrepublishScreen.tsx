@@ -280,8 +280,8 @@ function MobilePhonePreview({
                   onResize={onLayoutChange}
                   autoHeight={block.type === "markdown"}
                 >
-                  <div className="pointer-events-none overflow-hidden">
-                    <div style={{ width: "142.86%", transform: "scale(0.7)", transformOrigin: "top left" }}>
+                  <div className="pointer-events-none h-full overflow-hidden">
+                    <div style={{ width: "142.86%", height: "142.86%", transform: "scale(0.7)", transformOrigin: "top left" }}>
                       <BlockRenderer block={block} />
                     </div>
                   </div>
