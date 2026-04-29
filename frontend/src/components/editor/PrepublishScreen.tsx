@@ -118,18 +118,21 @@ function PreviewDraggableTile({
     [id, layout, gridMeta, onResize]
   );
 
-  const style: React.CSSProperties = {
+  const style = {
     gridColumn: `${layout.colStart} / span ${layout.colSpan}`,
     gridRow: `${layout.rowStart} / span ${layout.rowSpan}`,
-    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+    x: transform?.x ?? 0,
+    y: transform?.y ?? 0,
     zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.8 : undefined,
   };
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
+      layout={!isDragging}
       style={style}
+      animate={{ opacity: isDragging ? 0.8 : 1 }}
+      transition={{ duration: 0.15, x: { duration: 0 }, y: { duration: 0 }, layout: { type: "spring", stiffness: 400, damping: 30 } }}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[8px] border border-primary/50 bg-bg`}
     >
       <div
@@ -153,7 +156,7 @@ function PreviewDraggableTile({
           <path d="M9 1v8H1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -266,7 +269,7 @@ function MobilePhonePreview({
               data-preview-grid
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                 gridAutoRows: gridMeta.rowHeight || "auto",
                 gap: 12,
               }}

@@ -100,12 +100,13 @@ export function MobileDraggableTile({
   return (
     <motion.div
       ref={setNodeRef}
+      layout={!isDragging}
       style={style}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[15px] bg-bg ${className ?? ""}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: isDragging ? 0.8 : 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.2, x: { duration: 0 }, y: { duration: 0 } }}
+      transition={{ duration: 0.2, x: { duration: 0 }, y: { duration: 0 }, layout: { type: "spring", stiffness: 400, damping: 30 } }}
     >
       <div
         {...listeners}
