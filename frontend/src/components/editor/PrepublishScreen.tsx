@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -120,8 +120,7 @@ function PreviewDraggableTile({
 
   const style: React.CSSProperties = {
     gridColumn: `${layout.colStart} / span ${layout.colSpan}`,
-    gridRow: `span ${layout.rowSpan}`,
-    order: layout.rowStart,
+    gridRow: `${layout.rowStart} / span ${layout.rowSpan}`,
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     zIndex: isDragging ? 50 : undefined,
     opacity: isDragging ? 0.8 : undefined,
@@ -170,6 +169,37 @@ function MobilePhonePreview({
   const gridRef = useRef<HTMLDivElement>(null);
   const [gridMeta, setGridMeta] = useState({ colWidth: 0, rowHeight: 0 });
   const topLevel = blocks.filter((b) => !b.parent_block_id);
+
+  const reflowedLayouts = useMemo(() => {
+    const sorted = [...topLevel].sort((a, b) => {
+      if (a.grid_layout_mobile.rowStart !== b.grid_layout_mobile.rowStart)
+        return a.grid_layout_mobile.rowStart - b.grid_layout_mobile.rowStart;
+      return a.grid_layout_mobile.colStart - b.grid_layout_mobile.colStart;
+    });
+    const occupied = new Set<string>();
+    const result = new Map<string, MobileLayout>();
+    for (const block of sorted) {
+      const layout = block.grid_layout_mobile;
+      let rowStart = layout.rowStart;
+      while (true) {
+        let fits = true;
+        for (let r = rowStart; r < rowStart + layout.rowSpan && fits; r++) {
+          for (let c = layout.colStart; c < layout.colStart + layout.colSpan && fits; c++) {
+            if (occupied.has(`${r},${c}`)) fits = false;
+          }
+        }
+        if (fits) break;
+        rowStart++;
+      }
+      for (let r = rowStart; r < rowStart + layout.rowSpan; r++) {
+        for (let c = layout.colStart; c < layout.colStart + layout.colSpan; c++) {
+          occupied.add(`${r},${c}`);
+        }
+      }
+      result.set(block.id, { ...layout, rowStart });
+    }
+    return result;
+  }, [topLevel]);
 
   const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
   const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } });
@@ -238,7 +268,6 @@ function MobilePhonePreview({
                 display: "grid",
                 gridTemplateColumns: "repeat(2, 1fr)",
                 gridAutoRows: gridMeta.rowHeight || "auto",
-                gridAutoFlow: "row dense",
                 gap: 12,
               }}
             >
@@ -246,7 +275,7 @@ function MobilePhonePreview({
                 <PreviewDraggableTile
                   key={block.id}
                   id={block.id}
-                  layout={block.grid_layout_mobile}
+                  layout={reflowedLayouts.get(block.id) || block.grid_layout_mobile}
                   gridMeta={gridMeta}
                   onResize={onLayoutChange}
                   autoHeight={block.type === "markdown"}
