@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useEffect } from "react";
 import { useDraggable } from "@dnd-kit/core";
+import { motion } from "framer-motion";
 import type { MobileLayout } from "@/lib/types/grid";
 
 interface MobileDraggableTileProps {
@@ -88,21 +89,23 @@ export function MobileDraggableTile({
     [id, mobileLayout, gridMeta, onResize]
   );
 
-  const style: React.CSSProperties = {
+  const style = {
     gridColumn: `${mobileLayout.colStart} / span ${mobileLayout.colSpan}`,
     gridRow: `${mobileLayout.rowStart} / span ${mobileLayout.rowSpan}`,
-    transform: transform
-      ? `translate(${transform.x}px, ${transform.y}px)`
-      : undefined,
+    x: transform?.x ?? 0,
+    y: transform?.y ?? 0,
     zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.8 : undefined,
   };
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[15px] bg-bg ${className ?? ""}`}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: isDragging ? 0.8 : 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.2, x: { duration: 0 }, y: { duration: 0 } }}
     >
       <div
         {...listeners}
@@ -128,6 +131,6 @@ export function MobileDraggableTile({
           <path d="M9 1v8H1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </div>
-    </div>
+    </motion.div>
   );
 }
