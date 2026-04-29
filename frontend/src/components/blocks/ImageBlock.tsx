@@ -214,6 +214,7 @@ export function ImageBlock({ block, isEditing, onUpdate }: ImageBlockProps) {
         <img
           src={block.content.url}
           alt={block.content.alt}
+          draggable={false}
           className="absolute select-none"
           style={{
             width: `${cropZoom * 100}%`,

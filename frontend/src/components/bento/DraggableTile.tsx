@@ -45,7 +45,7 @@ export function DraggableTile({
       const dragHandleHeight = 24;
       const contentHeight = el!.scrollHeight + dragHandleHeight;
       const needed = Math.ceil((contentHeight + gap) / (rowHeight + gap));
-      if (needed !== desktopLayout.rowSpan) {
+      if (needed > desktopLayout.rowSpan) {
         onResize(id, { rowSpan: needed });
       }
     }

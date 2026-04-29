@@ -72,7 +72,7 @@ function PreviewDraggableTile({
       const dragHandleHeight = 16;
       const scaledContentHeight = el!.scrollHeight * 0.7;
       const needed = Math.ceil((scaledContentHeight + dragHandleHeight + gap) / (rowHeight + gap));
-      if (needed !== layout.rowSpan) {
+      if (needed > layout.rowSpan) {
         onResize(id, { rowSpan: needed });
       }
     }
@@ -120,7 +120,8 @@ function PreviewDraggableTile({
 
   const style: React.CSSProperties = {
     gridColumn: `${layout.colStart} / span ${layout.colSpan}`,
-    gridRow: `${layout.rowStart} / span ${layout.rowSpan}`,
+    gridRow: `span ${layout.rowSpan}`,
+    order: layout.rowStart,
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     zIndex: isDragging ? 50 : undefined,
     opacity: isDragging ? 0.8 : undefined,
@@ -237,6 +238,7 @@ function MobilePhonePreview({
                 display: "grid",
                 gridTemplateColumns: "repeat(2, 1fr)",
                 gridAutoRows: gridMeta.rowHeight || "auto",
+                gridAutoFlow: "row dense",
                 gap: 12,
               }}
             >

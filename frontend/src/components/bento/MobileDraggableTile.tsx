@@ -42,7 +42,7 @@ export function MobileDraggableTile({
       const dragHandleHeight = 24;
       const contentHeight = el!.scrollHeight + dragHandleHeight;
       const needed = Math.ceil((contentHeight + gap) / (rowHeight + gap));
-      if (needed !== mobileLayout.rowSpan) {
+      if (needed > mobileLayout.rowSpan) {
         onResize(id, { rowSpan: needed });
       }
     }
@@ -121,6 +121,7 @@ export function MobileDraggableTile({
 
       <div
         onPointerDown={handleResizeCorner}
+        style={{ touchAction: "none" }}
         className="absolute bottom-1 right-1 flex size-6 cursor-nwse-resize items-center justify-center rounded-sm"
       >
         <svg viewBox="0 0 10 10" className="size-3 text-text/30">
