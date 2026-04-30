@@ -107,10 +107,10 @@ export function MobileDraggableTile({
       layout={!isDragging}
       style={style}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[15px] bg-bg ${className ?? ""}`}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: isDragging ? 0.8 : 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.2, x: { duration: 0 }, y: { duration: 0 }, layout: { type: "spring", stiffness: 400, damping: 30 } }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: isDragging ? 0.7 : 1, scale: isDragging ? 1.03 : 1 }}
+      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
+      transition={{ duration: 0.2, x: { duration: 0 }, y: { duration: 0 }, scale: { type: "spring", stiffness: 300, damping: 15 }, layout: { type: "spring", stiffness: 200, damping: 18, mass: 1.2 } }}
     >
       <div
         {...listeners}

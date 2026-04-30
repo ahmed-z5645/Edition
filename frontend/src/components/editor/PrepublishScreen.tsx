@@ -135,8 +135,8 @@ function PreviewDraggableTile({
       ref={setNodeRef}
       layout={!isDragging}
       style={style}
-      animate={{ opacity: isDragging ? 0.8 : 1 }}
-      transition={{ duration: 0.15, x: { duration: 0 }, y: { duration: 0 }, layout: { type: "spring", stiffness: 400, damping: 30 } }}
+      animate={{ opacity: isDragging ? 0.7 : 1, scale: isDragging ? 1.03 : 1 }}
+      transition={{ duration: 0.15, x: { duration: 0 }, y: { duration: 0 }, scale: { type: "spring", stiffness: 300, damping: 15 }, layout: { type: "spring", stiffness: 200, damping: 18, mass: 1.2 } }}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[8px] border border-primary/50 bg-bg`}
     >
       <div
