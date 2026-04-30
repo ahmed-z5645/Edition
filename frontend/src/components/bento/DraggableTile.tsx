@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useEffect } from "react";
 import { useDraggable } from "@dnd-kit/core";
+import { motion } from "framer-motion";
 import type { DesktopLayout, MobileLayout } from "@/lib/types/grid";
 
 interface DraggableTileProps {
@@ -66,6 +67,8 @@ export function DraggableTile({
       const startY = e.clientY;
       const startColSpan = desktopLayout.colSpan;
       const startRowSpan = desktopLayout.rowSpan;
+      let lastColSpan = startColSpan;
+      let lastRowSpan = startRowSpan;
       const gap = 16;
 
       function onMove(ev: PointerEvent) {
@@ -75,7 +78,9 @@ export function DraggableTile({
         const rowDelta = Math.round(dy / (gridMeta.rowHeight + gap));
         const newColSpan = Math.max(1, Math.min(5 - desktopLayout.colStart, startColSpan + colDelta));
         const newRowSpan = Math.max(1, startRowSpan + rowDelta);
-        if (newColSpan !== desktopLayout.colSpan || newRowSpan !== desktopLayout.rowSpan) {
+        if (newColSpan !== lastColSpan || newRowSpan !== lastRowSpan) {
+          lastColSpan = newColSpan;
+          lastRowSpan = newRowSpan;
           onResize(id, { colSpan: newColSpan, rowSpan: newRowSpan });
         }
       }
@@ -91,21 +96,39 @@ export function DraggableTile({
     [id, desktopLayout, gridMeta, onResize]
   );
 
-  const style: React.CSSProperties = {
+  const style = {
     gridColumn: `${desktopLayout.colStart} / span ${desktopLayout.colSpan}`,
     gridRow: `${desktopLayout.rowStart} / span ${desktopLayout.rowSpan}`,
-    transform: transform
-      ? `translate(${transform.x}px, ${transform.y}px)`
-      : undefined,
+    // x and y removed from here to allow Framer Motion to interpolate them
     zIndex: isDragging ? 50 : (zIndex || undefined),
-    opacity: isDragging ? 0.8 : undefined,
   };
 
+  // Define the master spring configuration so it can be perfectly matched
+  const springConfig = { type: "spring", stiffness: 200, damping: 18, mass: 1.2 };
+
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
+      layout // Always on to maintain layout projection context
       style={style}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[15px] bg-bg ${className ?? ""}`}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ 
+        // Track the cursor perfectly during drag, animate to 0 when dropped
+        x: isDragging ? (transform?.x ?? 0) : 0, 
+        y: isDragging ? (transform?.y ?? 0) : 0, 
+        opacity: isDragging ? 0.7 : 1, 
+        scale: isDragging ? 1.03 : 1 
+      }}
+      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
+      transition={{ 
+        // The magic happens here: x, y, and layout MUST share the exact same spring configuration on drop
+        layout: isDragging ? { duration: 0 } : springConfig,
+        x: isDragging ? { duration: 0 } : springConfig, 
+        y: isDragging ? { duration: 0 } : springConfig, 
+        scale: { type: "spring", stiffness: 300, damping: 15 },
+        opacity: { duration: 0.2 }
+      }}
     >
       {/* Drag handle */}
       <div
@@ -132,6 +155,6 @@ export function DraggableTile({
           <path d="M9 1v8H1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </div>
-    </div>
+    </motion.div>
   );
 }

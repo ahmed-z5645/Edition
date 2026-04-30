@@ -11,6 +11,7 @@ import {
 } from "@dnd-kit/core";
 import type { Block, BlockType, Post } from "@/lib/types/blocks";
 import type { DesktopLayout, MobileLayout } from "@/lib/types/grid";
+import { AnimatePresence } from "framer-motion";
 import { BentoGrid, BentoGridMobile } from "@/components/bento/BentoGrid";
 import { DraggableTile } from "@/components/bento/DraggableTile";
 import { MobileDraggableTile } from "@/components/bento/MobileDraggableTile";
@@ -549,30 +550,32 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
 
         <DndContext sensors={sensors} onDragEnd={handleMobileDragEnd}>
           <BentoGridMobile ref={mobileGridRef} minExtraRows={2} blocks={topLevelBlocks}>
-            {topLevelBlocks.map((block) => (
-              <MobileDraggableTile
-                key={block.id}
-                id={block.id}
-                mobileLayout={block.grid_layout_mobile}
-                gridMeta={mobileGridMeta}
-                onResize={handleMobileResize}
-                className="group/tile relative border border-primary"
-                autoHeight={block.type === "markdown"}
-              >
-                <button
-                  onClick={() => handleDeleteBlock(block.id)}
-                  className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded-full bg-text/10 text-xs active:bg-accent active:text-white"
+            <AnimatePresence>
+              {topLevelBlocks.map((block) => (
+                <MobileDraggableTile
+                  key={block.id}
+                  id={block.id}
+                  mobileLayout={block.grid_layout_mobile}
+                  gridMeta={mobileGridMeta}
+                  onResize={handleMobileResize}
+                  className="group/tile relative border border-primary"
+                  autoHeight={block.type === "markdown"}
                 >
-                  ×
-                </button>
-                <BlockRenderer
-                  block={block}
-                  childBlocks={childBlocksMap[block.id]}
-                  isEditing={true}
-                  onUpdate={handleUpdateBlock}
-                />
-              </MobileDraggableTile>
-            ))}
+                  <button
+                    onClick={() => handleDeleteBlock(block.id)}
+                    className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded-full bg-text/10 text-xs active:bg-accent active:text-white"
+                  >
+                    ×
+                  </button>
+                  <BlockRenderer
+                    block={block}
+                    childBlocks={childBlocksMap[block.id]}
+                    isEditing={true}
+                    onUpdate={handleUpdateBlock}
+                  />
+                </MobileDraggableTile>
+              ))}
+            </AnimatePresence>
             <MobileGhostBlockOverlay
               gridRef={mobileGridRef}
               blocks={blocks}
@@ -613,32 +616,34 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <BentoGrid ref={gridRef} minExtraRows={2} blocks={topLevelBlocks}>
-          {topLevelBlocks.map((block) => (
-            <DraggableTile
-              key={block.id}
-              id={block.id}
-              desktopLayout={block.grid_layout_desktop}
-              mobileLayout={block.grid_layout_mobile}
-              gridMeta={gridMeta}
-              onResize={handleResize}
-              className="group relative border border-primary"
-              autoHeight={block.type === "markdown"}
-              zIndex={block.z_index}
-            >
-              <button
-                onClick={() => handleDeleteBlock(block.id)}
-                className="absolute right-2 top-2 z-10 hidden size-6 items-center justify-center rounded-full bg-text/10 text-xs hover:bg-accent hover:text-white group-hover:flex"
+          <AnimatePresence>
+            {topLevelBlocks.map((block) => (
+              <DraggableTile
+                key={block.id}
+                id={block.id}
+                desktopLayout={block.grid_layout_desktop}
+                mobileLayout={block.grid_layout_mobile}
+                gridMeta={gridMeta}
+                onResize={handleResize}
+                className="group relative border border-primary"
+                autoHeight={block.type === "markdown"}
+                zIndex={block.z_index}
               >
-                x
-              </button>
-              <BlockRenderer
-                block={block}
-                childBlocks={childBlocksMap[block.id]}
-                isEditing={true}
-                onUpdate={handleUpdateBlock}
-              />
-            </DraggableTile>
-          ))}
+                <button
+                  onClick={() => handleDeleteBlock(block.id)}
+                  className="absolute right-2 top-2 z-10 hidden size-6 items-center justify-center rounded-full bg-text/10 text-xs hover:bg-accent hover:text-white group-hover:flex"
+                >
+                  x
+                </button>
+                <BlockRenderer
+                  block={block}
+                  childBlocks={childBlocksMap[block.id]}
+                  isEditing={true}
+                  onUpdate={handleUpdateBlock}
+                />
+              </DraggableTile>
+            ))}
+          </AnimatePresence>
           <GhostBlockOverlay
             gridRef={gridRef}
             blocks={blocks}

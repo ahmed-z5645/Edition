@@ -15,6 +15,7 @@ interface UserResult {
   bio: string | null;
   avatar_url: string | null;
   is_following: boolean;
+  follow_status: string | null;
 }
 
 interface PostResult {
@@ -160,6 +161,7 @@ export default function SearchPage() {
                 <FollowButton
                   userId={user.id}
                   initialFollowing={user.is_following}
+                  initialStatus={user.follow_status as "accepted" | "pending" | null}
                 />
               </div>
             ))

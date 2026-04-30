@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { api } from "@/lib/api";
 import { FeedLockGate } from "@/components/feed/FeedLockGate";
+import { FeedSkeleton } from "@/components/feed/FeedSkeleton";
 import { PostCard, type PostCardData } from "@/components/feed/PostCard";
 
 interface FeedResponse {
@@ -73,11 +74,7 @@ export default function FeedPage() {
   }, [feed, loadMore]);
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="size-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-      </div>
-    );
+    return <FeedSkeleton />;
   }
 
   if (!feed) {

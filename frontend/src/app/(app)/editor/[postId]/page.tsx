@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Post, Block } from "@/lib/types/blocks";
 import { EditorCanvas } from "@/components/editor/EditorCanvas";
+import { EditorSplashScreen } from "@/components/editor/EditorSplashScreen";
 
 export default function EditorPostPage() {
   const { postId } = useParams<{ postId: string }>();
@@ -37,11 +38,7 @@ export default function EditorPostPage() {
   }
 
   if (!post || !blocks) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="size-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-      </div>
-    );
+    return <EditorSplashScreen />;
   }
 
   return <EditorCanvas post={post} initialBlocks={blocks} />;

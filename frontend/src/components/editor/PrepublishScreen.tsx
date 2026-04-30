@@ -93,6 +93,8 @@ function PreviewDraggableTile({
       const startY = e.clientY;
       const startColSpan = layout.colSpan;
       const startRowSpan = layout.rowSpan;
+      let lastColSpan = startColSpan;
+      let lastRowSpan = startRowSpan;
       const gap = 12;
 
       function onMove(ev: PointerEvent) {
@@ -102,7 +104,9 @@ function PreviewDraggableTile({
         const rowDelta = Math.round(dy / (gridMeta.rowHeight + gap));
         const newColSpan = Math.max(1, Math.min(3 - layout.colStart, startColSpan + colDelta));
         const newRowSpan = Math.max(1, startRowSpan + rowDelta);
-        if (newColSpan !== layout.colSpan || newRowSpan !== layout.rowSpan) {
+        if (newColSpan !== lastColSpan || newRowSpan !== lastRowSpan) {
+          lastColSpan = newColSpan;
+          lastRowSpan = newRowSpan;
           onResize(id, { colSpan: newColSpan, rowSpan: newRowSpan });
         }
       }
@@ -118,18 +122,21 @@ function PreviewDraggableTile({
     [id, layout, gridMeta, onResize]
   );
 
-  const style: React.CSSProperties = {
+  const style = {
     gridColumn: `${layout.colStart} / span ${layout.colSpan}`,
     gridRow: `${layout.rowStart} / span ${layout.rowSpan}`,
-    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+    x: transform?.x ?? 0,
+    y: transform?.y ?? 0,
     zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.8 : undefined,
   };
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
+      layout={!isDragging}
       style={style}
+      animate={{ opacity: isDragging ? 0.7 : 1, scale: isDragging ? 1.03 : 1 }}
+      transition={{ duration: 0.15, x: { duration: 0 }, y: { duration: 0 }, scale: { type: "spring", stiffness: 300, damping: 15 }, layout: { type: "spring", stiffness: 200, damping: 18, mass: 1.2 } }}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[8px] border border-primary/50 bg-bg`}
     >
       <div
@@ -153,7 +160,7 @@ function PreviewDraggableTile({
           <path d="M9 1v8H1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -266,7 +273,7 @@ function MobilePhonePreview({
               data-preview-grid
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                 gridAutoRows: gridMeta.rowHeight || "auto",
                 gap: 12,
               }}
@@ -280,8 +287,8 @@ function MobilePhonePreview({
                   onResize={onLayoutChange}
                   autoHeight={block.type === "markdown"}
                 >
-                  <div className="pointer-events-none overflow-hidden">
-                    <div style={{ width: "142.86%", transform: "scale(0.7)", transformOrigin: "top left" }}>
+                  <div className="pointer-events-none h-full overflow-hidden">
+                    <div style={{ width: "142.86%", height: "142.86%", transform: "scale(0.7)", transformOrigin: "top left" }}>
                       <BlockRenderer block={block} />
                     </div>
                   </div>
