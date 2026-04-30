@@ -99,21 +99,36 @@ export function DraggableTile({
   const style = {
     gridColumn: `${desktopLayout.colStart} / span ${desktopLayout.colSpan}`,
     gridRow: `${desktopLayout.rowStart} / span ${desktopLayout.rowSpan}`,
-    x: transform?.x ?? 0,
-    y: transform?.y ?? 0,
+    // x and y removed from here to allow Framer Motion to interpolate them
     zIndex: isDragging ? 50 : (zIndex || undefined),
   };
+
+  // Define the master spring configuration so it can be perfectly matched
+  const springConfig = { type: "spring", stiffness: 200, damping: 18, mass: 1.2 };
 
   return (
     <motion.div
       ref={setNodeRef}
-      layout={!isDragging}
+      layout // Always on to maintain layout projection context
       style={style}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[15px] bg-bg ${className ?? ""}`}
       initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: isDragging ? 0.7 : 1, scale: isDragging ? 1.03 : 1 }}
+      animate={{ 
+        // Track the cursor perfectly during drag, animate to 0 when dropped
+        x: isDragging ? (transform?.x ?? 0) : 0, 
+        y: isDragging ? (transform?.y ?? 0) : 0, 
+        opacity: isDragging ? 0.7 : 1, 
+        scale: isDragging ? 1.03 : 1 
+      }}
       exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
-      transition={{ duration: 0.2, x: { duration: 0 }, y: { duration: 0 }, scale: { type: "spring", stiffness: 300, damping: 15 }, layout: { type: "spring", stiffness: 200, damping: 18, mass: 1.2 } }}
+      transition={{ 
+        // The magic happens here: x, y, and layout MUST share the exact same spring configuration on drop
+        layout: isDragging ? { duration: 0 } : springConfig,
+        x: isDragging ? { duration: 0 } : springConfig, 
+        y: isDragging ? { duration: 0 } : springConfig, 
+        scale: { type: "spring", stiffness: 300, damping: 15 },
+        opacity: { duration: 0.2 }
+      }}
     >
       {/* Drag handle */}
       <div

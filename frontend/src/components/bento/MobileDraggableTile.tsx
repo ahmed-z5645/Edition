@@ -96,21 +96,33 @@ export function MobileDraggableTile({
   const style = {
     gridColumn: `${mobileLayout.colStart} / span ${mobileLayout.colSpan}`,
     gridRow: `${mobileLayout.rowStart} / span ${mobileLayout.rowSpan}`,
-    x: transform?.x ?? 0,
-    y: transform?.y ?? 0,
     zIndex: isDragging ? 50 : undefined,
   };
 
   return (
     <motion.div
       ref={setNodeRef}
-      layout={!isDragging}
+      // 1. Layout handles 100% of spatial positioning
+      layout 
       style={style}
       className={`group/tile relative ${autoHeight ? "" : "overflow-hidden"} rounded-[15px] bg-bg ${className ?? ""}`}
       initial={{ opacity: 0, scale: 0.8 }}
+      // 2. Explicitly animate ONLY visuals (opacity, scale). No x or y!
       animate={{ opacity: isDragging ? 0.7 : 1, scale: isDragging ? 1.03 : 1 }}
       exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
-      transition={{ duration: 0.2, x: { duration: 0 }, y: { duration: 0 }, scale: { type: "spring", stiffness: 300, damping: 15 }, layout: { type: "spring", stiffness: 200, damping: 18, mass: 1.2 } }}
+      transition={{ 
+        layout: { type: "spring", stiffness: 200, damping: 18, mass: 1.2 },
+        scale: { type: "spring", stiffness: 300, damping: 15 },
+        opacity: { duration: 0.2 }
+      }}
+      // 3. THE FIX: Inject dnd-kit's drag offset cleanly into the CSS.
+      // When dropped, this vanishes instantly, and `layout` seamlessly springs from the gap!
+      transformTemplate={(_, generatedTransform) => {
+        if (isDragging && transform) {
+          return `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) ${generatedTransform}`;
+        }
+        return generatedTransform;
+      }}
     >
       <div
         {...listeners}

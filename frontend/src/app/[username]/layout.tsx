@@ -31,7 +31,7 @@ export default async function PublicProfileLayout({
         <header className="flex h-[80px] items-center justify-between border-b border-primary px-6 md:px-10">
           <div className="flex items-center gap-3">
             <div className="size-[35px] rounded-full" style={{ backgroundColor: avatarColor }} />
-            <span className="text-[25px]">@{username}</span>
+            <span className="text-[25px]"><h1>@{username}</h1></span>
           </div>
           <CountdownPill />
         </header>
