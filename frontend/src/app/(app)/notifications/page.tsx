@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { NotificationsSkeleton } from "@/components/notifications/NotificationsSkeleton";
 
 interface Actor {
   id: string;
@@ -104,11 +105,7 @@ export default function NotificationsPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="size-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-      </div>
-    );
+    return <NotificationsSkeleton />;
   }
 
   return (

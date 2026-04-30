@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { PostCard } from "@/components/feed/PostCard";
 import { FollowButton } from "@/components/social/FollowButton";
+import { ProfileSkeleton } from "@/components/social/ProfileSkeleton";
 
 interface Profile {
   id: string;
@@ -79,11 +80,7 @@ export function ProfileClient({ profile }: { profile: Profile }) {
   }, [profile.id, profile.is_public]);
 
   if (!loaded) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="size-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!profile.is_public && !isOwnProfile && followStatus !== "accepted") {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { SettingsSkeleton } from "@/components/settings/SettingsSkeleton";
 
 interface Profile {
   id: string;
@@ -85,11 +86,7 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="size-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (
