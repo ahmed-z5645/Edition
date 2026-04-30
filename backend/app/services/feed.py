@@ -32,6 +32,7 @@ def get_feed_posts(db: Client, user_id: str, week: int, year: int) -> list[dict]
         db.table("follows")
         .select("following_id")
         .eq("follower_id", user_id)
+        .eq("status", "accepted")
         .execute()
     )
     following_ids = [row["following_id"] for row in following.data or []]

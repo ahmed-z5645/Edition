@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { PostCard } from "@/components/feed/PostCard";
@@ -13,10 +14,12 @@ interface Profile {
   bio: string | null;
   is_public: boolean;
   avatar_url: string | null;
+  avatar_color: string | null;
 }
 
 export function ProfileClient({ profile }: { profile: Profile }) {
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followStatus, setFollowStatus] = useState<"accepted" | "pending" | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
@@ -36,10 +39,11 @@ export function ProfileClient({ profile }: { profile: Profile }) {
 
       if (user && !isOwner) {
         try {
-          const res = await api.get<{ is_following: boolean }>(
+          const res = await api.get<{ is_following: boolean; status: string | null }>(
             `/api/follows/check/${profile.id}`
           );
           setIsFollowing(res.is_following);
+          setFollowStatus(res.status as "accepted" | "pending" | null);
         } catch {
           // not logged in
         }
@@ -82,12 +86,12 @@ export function ProfileClient({ profile }: { profile: Profile }) {
     );
   }
 
-  if (!profile.is_public && !isOwnProfile) {
+  if (!profile.is_public && !isOwnProfile && followStatus !== "accepted") {
     return (
       <div className="space-y-8">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-5">
-            <div className="size-20 rounded-full bg-primary" />
+            <div className="size-20 shrink-0 rounded-full" style={{ backgroundColor: profile.avatar_color || "#223843" }} />
             <div>
               <h1 className="font-[family-name:var(--font-cabinet)] text-3xl font-bold">
                 {profile.display_name || profile.username}
@@ -98,7 +102,11 @@ export function ProfileClient({ profile }: { profile: Profile }) {
               )}
             </div>
           </div>
-          <FollowButton userId={profile.id} initialFollowing={isFollowing} />
+          <FollowButton
+            userId={profile.id}
+            initialFollowing={isFollowing}
+            initialStatus={followStatus}
+          />
         </div>
 
         <hr className="border-primary" />
@@ -122,7 +130,9 @@ export function ProfileClient({ profile }: { profile: Profile }) {
               This account is private
             </p>
             <p className="mt-1 text-sm text-text/40">
-              Follow this account to see their posts
+              {followStatus === "pending"
+                ? "Your follow request is pending"
+                : "Follow this account to see their posts"}
             </p>
           </div>
         </div>
@@ -132,9 +142,9 @@ export function ProfileClient({ profile }: { profile: Profile }) {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="flex items-center gap-5">
-          <div className="size-20 rounded-full bg-primary" />
+          <div className="size-20 shrink-0 rounded-full" style={{ backgroundColor: profile.avatar_color || "#223843" }} />
           <div>
             <h1 className="font-[family-name:var(--font-cabinet)] text-3xl font-bold">
               {profile.display_name || profile.username}
@@ -145,31 +155,37 @@ export function ProfileClient({ profile }: { profile: Profile }) {
             )}
           </div>
         </div>
-        {!isOwnProfile && (
-          <FollowButton userId={profile.id} initialFollowing={isFollowing} />
-        )}
-      </div>
 
-      {isOwnProfile && (
-        <div className="flex gap-6 text-sm">
-          <span>
-            <strong>{followerCount}</strong>{" "}
-            <span className="text-text/40">
-              {followerCount === 1 ? "follower" : "followers"}
-            </span>
-          </span>
-          <span>
-            <strong>{followingCount}</strong>{" "}
-            <span className="text-text/40">following</span>
-          </span>
-          <span>
-            <strong>{posts.length}</strong>{" "}
-            <span className="text-text/40">
-              {posts.length === 1 ? "post" : "posts"}
-            </span>
-          </span>
+        <div className="flex items-center gap-6">
+          {isOwnProfile && (
+            <div className="flex flex-1 justify-around gap-6 text-sm md:flex-none md:justify-start">
+              <Link href={`/${profile.username}/followers`} className="text-center hover:text-accent">
+                <strong className="block text-lg">{followerCount}</strong>
+                <span className="text-text/40">
+                  {followerCount === 1 ? "follower" : "followers"}
+                </span>
+              </Link>
+              <Link href={`/${profile.username}/following`} className="text-center hover:text-accent">
+                <strong className="block text-lg">{followingCount}</strong>
+                <span className="text-text/40">following</span>
+              </Link>
+              <span className="text-center">
+                <strong className="block text-lg">{posts.length}</strong>
+                <span className="text-text/40">
+                  {posts.length === 1 ? "post" : "posts"}
+                </span>
+              </span>
+            </div>
+          )}
+          {!isOwnProfile && (
+            <FollowButton
+              userId={profile.id}
+              initialFollowing={isFollowing}
+              initialStatus={followStatus}
+            />
+          )}
         </div>
-      )}
+      </div>
 
       <hr className="border-primary" />
 

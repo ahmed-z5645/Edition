@@ -26,6 +26,7 @@ async def get_feed(
             db.table("follows")
             .select("following_id")
             .eq("follower_id", user_id)
+            .eq("status", "accepted")
             .execute()
         )
         following_ids = [row["following_id"] for row in following.data or []]
@@ -67,6 +68,7 @@ async def get_older_posts(
         db.table("follows")
         .select("following_id")
         .eq("follower_id", user_id)
+        .eq("status", "accepted")
         .execute()
     )
     following_ids = [row["following_id"] for row in following.data or []]
@@ -115,6 +117,7 @@ async def get_archive(
         db.table("follows")
         .select("following_id")
         .eq("follower_id", user_id)
+        .eq("status", "accepted")
         .execute()
     )
     following_ids = [row["following_id"] for row in following.data or []]
