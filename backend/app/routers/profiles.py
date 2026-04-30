@@ -39,6 +39,12 @@ async def update_my_profile(
         if existing.data:
             raise HTTPException(status_code=409, detail="Username already taken")
 
+    going_public = False
+    if "is_public" in update_data and update_data["is_public"]:
+        current = db.table("profiles").select("is_public").eq("id", user_id).single().execute()
+        if current.data and not current.data.get("is_public"):
+            going_public = True
+
     result = (
         db.table("profiles")
         .update(update_data)
@@ -46,6 +52,25 @@ async def update_my_profile(
         .single()
         .execute()
     )
+
+    if going_public:
+        pending = (
+            db.table("follows")
+            .select("follower_id")
+            .eq("following_id", user_id)
+            .eq("status", "pending")
+            .execute()
+        )
+        if pending.data:
+            db.table("follows").update({"status": "accepted"}).eq(
+                "following_id", user_id
+            ).eq("status", "pending").execute()
+            notifications = [
+                {"user_id": row["follower_id"], "actor_id": user_id, "type": "follow_accepted"}
+                for row in pending.data
+            ]
+            db.table("notifications").insert(notifications).execute()
+
     return result.data
 
 

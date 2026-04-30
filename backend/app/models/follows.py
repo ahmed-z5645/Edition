@@ -5,6 +5,7 @@ from datetime import datetime
 class FollowResponse(BaseModel):
     follower_id: str
     following_id: str
+    status: str = "accepted"
     created_at: datetime | None = None
 
 

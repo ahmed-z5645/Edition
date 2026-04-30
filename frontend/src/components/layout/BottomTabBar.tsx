@@ -5,16 +5,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api";
 
 export function BottomTabBar() {
   const pathname = usePathname();
   const [username, setUsername] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     createClient()
       .auth.getUser()
       .then(({ data }) => {
         setUsername(data.user?.user_metadata?.username || null);
+        if (data.user) {
+          api
+            .get<{ count: number }>("/api/notifications/unread-count")
+            .then((res) => setUnreadCount(res.count))
+            .catch(() => {});
+        }
       });
   }, []);
 
@@ -51,6 +59,17 @@ export function BottomTabBar() {
       ),
     },
     {
+      href: "/notifications",
+      label: "Notifications",
+      badge: unreadCount > 0,
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+      ),
+    },
+    {
       href: username ? `/${username}` : "/settings",
       label: "Profile",
       icon: (
@@ -68,19 +87,27 @@ export function BottomTabBar() {
         {tabs.map((tab) => {
           const isProfile = tab.label === "Profile" && username;
           const cls = cn(
-            "flex size-10 items-center justify-center text-gray-400 transition-colors",
+            "relative flex size-10 items-center justify-center text-gray-400 transition-colors",
             pathname === tab.href && "text-accent"
+          );
+          const inner = (
+            <>
+              {tab.icon}
+              {"badge" in tab && tab.badge && (
+                <span className="absolute right-1 top-1 size-2 rounded-full bg-red-500" />
+              )}
+            </>
           );
           if (isProfile) {
             return (
               <a key={tab.label} href={tab.href} className={cls}>
-                {tab.icon}
+                {inner}
               </a>
             );
           }
           return (
             <Link key={tab.label} href={tab.href} className={cls}>
-              {tab.icon}
+              {inner}
             </Link>
           );
         })}

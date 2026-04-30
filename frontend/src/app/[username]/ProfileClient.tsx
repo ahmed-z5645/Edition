@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { PostCard } from "@/components/feed/PostCard";
@@ -17,6 +18,7 @@ interface Profile {
 
 export function ProfileClient({ profile }: { profile: Profile }) {
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followStatus, setFollowStatus] = useState<"accepted" | "pending" | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
@@ -36,10 +38,11 @@ export function ProfileClient({ profile }: { profile: Profile }) {
 
       if (user && !isOwner) {
         try {
-          const res = await api.get<{ is_following: boolean }>(
+          const res = await api.get<{ is_following: boolean; status: string | null }>(
             `/api/follows/check/${profile.id}`
           );
           setIsFollowing(res.is_following);
+          setFollowStatus(res.status as "accepted" | "pending" | null);
         } catch {
           // not logged in
         }
@@ -82,7 +85,7 @@ export function ProfileClient({ profile }: { profile: Profile }) {
     );
   }
 
-  if (!profile.is_public && !isOwnProfile) {
+  if (!profile.is_public && !isOwnProfile && followStatus !== "accepted") {
     return (
       <div className="space-y-8">
         <div className="flex items-start justify-between">
@@ -98,7 +101,11 @@ export function ProfileClient({ profile }: { profile: Profile }) {
               )}
             </div>
           </div>
-          <FollowButton userId={profile.id} initialFollowing={isFollowing} />
+          <FollowButton
+            userId={profile.id}
+            initialFollowing={isFollowing}
+            initialStatus={followStatus}
+          />
         </div>
 
         <hr className="border-primary" />
@@ -122,7 +129,9 @@ export function ProfileClient({ profile }: { profile: Profile }) {
               This account is private
             </p>
             <p className="mt-1 text-sm text-text/40">
-              Follow this account to see their posts
+              {followStatus === "pending"
+                ? "Your follow request is pending"
+                : "Follow this account to see their posts"}
             </p>
           </div>
         </div>
@@ -146,22 +155,26 @@ export function ProfileClient({ profile }: { profile: Profile }) {
           </div>
         </div>
         {!isOwnProfile && (
-          <FollowButton userId={profile.id} initialFollowing={isFollowing} />
+          <FollowButton
+            userId={profile.id}
+            initialFollowing={isFollowing}
+            initialStatus={followStatus}
+          />
         )}
       </div>
 
       {isOwnProfile && (
         <div className="flex gap-6 text-sm">
-          <span>
+          <Link href={`/${profile.username}/followers`} className="hover:text-accent">
             <strong>{followerCount}</strong>{" "}
             <span className="text-text/40">
               {followerCount === 1 ? "follower" : "followers"}
             </span>
-          </span>
-          <span>
+          </Link>
+          <Link href={`/${profile.username}/following`} className="hover:text-accent">
             <strong>{followingCount}</strong>{" "}
             <span className="text-text/40">following</span>
-          </span>
+          </Link>
           <span>
             <strong>{posts.length}</strong>{" "}
             <span className="text-text/40">

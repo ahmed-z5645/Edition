@@ -3,25 +3,38 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
 
+type FollowStatus = "accepted" | "pending" | null;
+
 export function FollowButton({
   userId,
   initialFollowing,
+  initialStatus = null,
 }: {
   userId: string;
   initialFollowing: boolean;
+  initialStatus?: FollowStatus;
 }) {
-  const [isFollowing, setIsFollowing] = useState(initialFollowing);
+  const [status, setStatus] = useState<FollowStatus>(
+    initialFollowing ? "accepted" : initialStatus
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleToggle() {
     setLoading(true);
     try {
-      if (isFollowing) {
+      if (status === "accepted" || status === "pending") {
         await api.delete(`/api/follows/${userId}`);
-        setIsFollowing(false);
+        setStatus(null);
       } else {
-        await api.post(`/api/follows/${userId}`, {});
-        setIsFollowing(true);
+        const res = await api.post<{ status: string }>(
+          `/api/follows/${userId}`,
+          {}
+        );
+        if (res.status === "followed" || res.status === "already_following") {
+          setStatus("accepted");
+        } else if (res.status === "requested" || res.status === "already_requested") {
+          setStatus("pending");
+        }
       }
     } catch (e) {
       console.error("Follow toggle failed:", e);
@@ -30,17 +43,26 @@ export function FollowButton({
     }
   }
 
+  const label =
+    status === "accepted"
+      ? "Following"
+      : status === "pending"
+        ? "Requested"
+        : "Follow";
+
   return (
     <button
       onClick={handleToggle}
       disabled={loading}
       className={`rounded-[15px] px-5 py-2 text-sm transition-colors ${
-        isFollowing
+        status === "accepted"
           ? "border border-primary text-text/60 hover:border-accent hover:text-accent"
-          : "bg-text text-bg hover:bg-text/90"
+          : status === "pending"
+            ? "border border-primary text-text/40 hover:border-text/40"
+            : "bg-text text-bg hover:bg-text/90"
       }`}
     >
-      {isFollowing ? "Following" : "Follow"}
+      {label}
     </button>
   );
 }
