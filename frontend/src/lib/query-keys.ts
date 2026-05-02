@@ -7,4 +7,5 @@ export const keys = {
   archive: () => ["feed", "archive"] as const,
   myProfile: () => ["profile", "me"] as const,
   profile: (userId: string) => ["profile", userId] as const,
+  notificationsUnreadCount: () => ["notifications", "unread-count"] as const,
 };

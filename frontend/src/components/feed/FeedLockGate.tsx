@@ -10,7 +10,6 @@ export function FeedLockGate({ postCount }: { postCount: number }) {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center rounded-[15px] border border-primary py-20"
     >
-      <div className="mb-4 text-4xl">🔒</div>
       <h2 className="mb-2 font-[family-name:var(--font-cabinet)] text-2xl font-bold">
         Feed is locked
       </h2>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { ImageBlock as ImageBlockType } from "@/lib/types/blocks";
 
@@ -10,6 +10,29 @@ interface ImageBlockProps {
   block: ImageBlockType;
   isEditing?: boolean;
   onUpdate?: (content: { url: string; alt: string; caption?: string; cropX?: number; cropY?: number; cropZoom?: number }) => void;
+}
+
+// Helper to ensure math is identical in both modes
+function getCoverMath(containerW: number, containerH: number, imageW: number, imageH: number, zoom: number, offsetX: number, offsetY: number) {
+  // If dimensions aren't ready, return 0 to prevent "insane zoom" flashes
+  if (!containerW || !imageW) {
+    return { width: 0, height: 0, pxX: 0, pxY: 0, clampedX: 0, clampedY: 0 };
+  }
+
+  const scale = Math.max(containerW / imageW, containerH / imageH);
+  const baseWidth = imageW * scale;
+  const baseHeight = imageH * scale;
+
+  const maxOffsetXPercent = (Math.max(0, (baseWidth * zoom - containerW) / 2) / containerW) * 100;
+  const maxOffsetYPercent = (Math.max(0, (baseHeight * zoom - containerH) / 2) / containerH) * 100;
+
+  const clampedX = Math.min(maxOffsetXPercent, Math.max(-maxOffsetXPercent, offsetX));
+  const clampedY = Math.min(maxOffsetYPercent, Math.max(-maxOffsetYPercent, offsetY));
+
+  const pxX = (clampedX / 100) * containerW;
+  const pxY = (clampedY / 100) * containerH;
+
+  return { width: baseWidth, height: baseHeight, pxX, pxY, clampedX, clampedY };
 }
 
 function ImageCropper({
@@ -27,67 +50,95 @@ function ImageCropper({
   onConfirm: (x: number, y: number, zoom: number) => void;
   onCancel: () => void;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [imageSize, setImageSize] = useState({ w: 0, h: 0 });
+
   const [zoom, setZoom] = useState(initialZoom);
   const [offset, setOffset] = useState({ x: initialX, y: initialY });
+  
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const offsetStart = useRef({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setContainerSize({
+        w: entries[0].contentRect.width,
+        h: entries[0].contentRect.height,
+      });
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoom((z) => Math.min(3, Math.max(1, z - e.deltaY * 0.002)));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  const { width, height, pxX, pxY, clampedX, clampedY } = getCoverMath(
+    containerSize.w, containerSize.h, imageSize.w, imageSize.h, zoom, offset.x, offset.y
+  );
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     dragging.current = true;
     dragStart.current = { x: e.clientX, y: e.clientY };
-    offsetStart.current = { ...offset };
+    offsetStart.current = { x: clampedX, y: clampedY };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [offset]);
+  }, [clampedX, clampedY]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging.current || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const dx = ((e.clientX - dragStart.current.x) / rect.width) * 100;
-    const dy = ((e.clientY - dragStart.current.y) / rect.height) * 100;
+    if (!dragging.current || !containerSize.w) return;
+    const dx = ((e.clientX - dragStart.current.x) / containerSize.w) * 100;
+    const dy = ((e.clientY - dragStart.current.y) / containerSize.h) * 100;
     setOffset({
-      x: Math.min(50, Math.max(-50, offsetStart.current.x + dx)),
-      y: Math.min(50, Math.max(-50, offsetStart.current.y + dy)),
+      x: offsetStart.current.x + dx,
+      y: offsetStart.current.y + dy,
     });
-  }, []);
+  }, [containerSize]);
 
   const handlePointerUp = useCallback(() => {
     dragging.current = false;
-  }, []);
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    setZoom((z) => Math.min(3, Math.max(1, z - e.deltaY * 0.002)));
-  }, []);
+    setOffset({ x: clampedX, y: clampedY });
+  }, [clampedX, clampedY]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative h-full w-full overflow-hidden rounded-[15px]">
       <div
         ref={containerRef}
-        className="relative flex-1 cursor-grab overflow-hidden rounded-t-[15px] active:cursor-grabbing"
+        className="absolute inset-0 cursor-grab active:cursor-grabbing"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onWheel={handleWheel}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt=""
           draggable={false}
-          className="absolute select-none"
+          onLoad={(e) => setImageSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+          className="absolute select-none max-w-none transition-opacity duration-200"
           style={{
-            width: `${zoom * 100}%`,
-            height: `${zoom * 100}%`,
-            objectFit: "cover",
-            left: `${50 + offset.x - (zoom * 100) / 2}%`,
-            top: `${50 + offset.y - (zoom * 100) / 2}%`,
+            opacity: width ? 1 : 0,
+            width,
+            height,
+            left: "50%",
+            top: "50%",
+            transform: `translate(-50%, -50%) translate(${pxX}px, ${pxY}px) scale(${zoom})`,
           }}
         />
       </div>
-      <div className="flex items-center gap-2 rounded-b-[15px] border-t border-primary bg-bg px-3 py-2">
-        <span className="text-xs text-text/40">Zoom</span>
+      
+      <div className="absolute bottom-3 left-1/2 flex w-[90%] max-w-[320px] -translate-x-1/2 items-center gap-3 rounded-xl border border-primary/20 bg-bg/95 px-4 py-2 shadow-lg backdrop-blur">
+        <span className="text-xs font-medium text-text/60">Zoom</span>
         <input
           type="range"
           min={1}
@@ -97,18 +148,20 @@ function ImageCropper({
           onChange={(e) => setZoom(parseFloat(e.target.value))}
           className="flex-1 accent-accent"
         />
-        <button
-          onClick={onCancel}
-          className="rounded-[8px] px-3 py-1 text-xs text-text/50 hover:bg-text/5"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => onConfirm(offset.x, offset.y, zoom)}
-          className="rounded-[8px] bg-accent px-3 py-1 text-xs text-white"
-        >
-          Apply
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={onCancel}
+            className="rounded-[8px] px-2 py-1.5 text-xs font-medium text-text/60 hover:bg-text/5 hover:text-text"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(clampedX, clampedY, zoom)}
+            className="rounded-[8px] bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+          >
+            Apply
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -116,8 +169,24 @@ function ImageCropper({
 
 export function ImageBlock({ block, isEditing, onUpdate }: ImageBlockProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const displayContainerRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const [cropping, setCropping] = useState(false);
+  
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [imageSize, setImageSize] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    if (!displayContainerRef.current || cropping) return;
+    const observer = new ResizeObserver((entries) => {
+      setContainerSize({
+        w: entries[0].contentRect.width,
+        h: entries[0].contentRect.height,
+      });
+    });
+    observer.observe(displayContainerRef.current);
+    return () => observer.disconnect();
+  }, [cropping]);
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -208,31 +277,38 @@ export function ImageBlock({ block, isEditing, onUpdate }: ImageBlockProps) {
   const cropZoom = (block.content as Record<string, unknown>).cropZoom as number || 1;
 
   if (block.content.url) {
+    // Shared logic powers the final view too!
+    const { width, height, pxX, pxY } = getCoverMath(
+      containerSize.w, containerSize.h, imageSize.w, imageSize.h, cropZoom, cropX, cropY
+    );
+
     return (
-      <div className="relative h-full overflow-hidden rounded-[15px]">
+      <div ref={displayContainerRef} className="relative h-full w-full overflow-hidden rounded-[15px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={block.content.url}
           alt={block.content.alt}
           draggable={false}
-          className="absolute select-none"
+          onLoad={(e) => setImageSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+          className="absolute select-none max-w-none transition-opacity duration-200"
           style={{
-            width: `${cropZoom * 100}%`,
-            height: `${cropZoom * 100}%`,
-            objectFit: "cover",
-            left: `${50 + cropX - (cropZoom * 100) / 2}%`,
-            top: `${50 + cropY - (cropZoom * 100) / 2}%`,
+            opacity: width ? 1 : 0, 
+            width,
+            height,
+            left: "50%",
+            top: "50%",
+            transform: `translate(-50%, -50%) translate(${pxX}px, ${pxY}px) scale(${cropZoom})`,
           }}
         />
         {block.content.caption && (
-          <p className="absolute bottom-0 w-full bg-text/50 p-2 text-xs text-white">
+          <p className="absolute bottom-0 w-full bg-text/50 p-2 text-xs text-white backdrop-blur-sm">
             {block.content.caption}
           </p>
         )}
         {isEditing && (
           <button
             onClick={() => setCropping(true)}
-            className="absolute left-2 top-2 rounded-full bg-text/50 px-2 py-1 text-xs text-white hover:bg-accent"
+            className="absolute left-2 top-2 rounded-full bg-text/50 px-3 py-1.5 text-xs font-medium text-white shadow-sm backdrop-blur-md hover:bg-accent"
           >
             Adjust
           </button>

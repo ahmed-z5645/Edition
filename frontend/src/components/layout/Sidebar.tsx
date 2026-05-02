@@ -1,30 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
+import { keys } from "@/lib/query-keys";
 
 export function Sidebar() {
   const pathname = usePathname();
   const [username, setUsername] = useState<string | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     createClient()
       .auth.getUser()
-      .then(({ data }) => {
-        setUsername(data.user?.user_metadata?.username || null);
-        if (data.user) {
-          api
-            .get<{ count: number }>("/api/notifications/unread-count")
-            .then((res) => setUnreadCount(res.count))
-            .catch(() => {});
-        }
-      });
+      .then(({ data }) => setUsername(data.user?.user_metadata?.username || null));
   }, []);
+
+  const { data: unreadData } = useQuery({
+    queryKey: keys.notificationsUnreadCount(),
+    queryFn: () => api.get<{ count: number }>("/api/notifications/unread-count"),
+    staleTime: 60_000,
+  });
+  const unreadCount = unreadData?.count ?? 0;
 
   const navItems = [
     {

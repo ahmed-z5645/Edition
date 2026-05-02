@@ -104,7 +104,7 @@ export function DraggableTile({
   };
 
   // Define the master spring configuration so it can be perfectly matched
-  const springConfig = { type: "spring", stiffness: 200, damping: 18, mass: 1.2 };
+  const springConfig = { type: "spring" as const, stiffness: 200, damping: 18, mass: 1.2 };
 
   return (
     <motion.div
