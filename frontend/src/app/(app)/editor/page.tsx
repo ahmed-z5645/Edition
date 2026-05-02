@@ -12,8 +12,8 @@ export default function EditorPage() {
   const router = useRouter();
 
   const { data: post, error } = useQuery({
-    queryKey: keys.currentPost(),
-    queryFn: () => api.get<Post>("/api/posts/me/current-week"),
+    queryKey: keys.editorPost(),
+    queryFn: () => api.get<Post>("/api/posts/me/editor"),
   });
 
   useEffect(() => {

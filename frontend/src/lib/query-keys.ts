@@ -1,5 +1,6 @@
 export const keys = {
   currentPost: () => ["post", "current-week"] as const,
+  editorPost: () => ["post", "editor"] as const,
   post: (id: string) => ["post", id] as const,
   postBlocks: (id: string) => ["post", id, "blocks"] as const,
   feed: () => ["feed"] as const,
