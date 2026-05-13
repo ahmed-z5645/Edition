@@ -117,6 +117,7 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [username, setUsername] = useState("");
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const dirtyBlocksRef = useRef<Set<string>>(new Set());
   const dirtyLayoutsRef = useRef<Set<string>>(new Set());
   const pendingCreatesRef = useRef<Set<string>>(new Set());
@@ -280,6 +281,19 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [saveAll]);
+
+  useEffect(() => {
+    if (!selectedBlockId) return;
+    function handleMouseDown(e: MouseEvent) {
+      const target = e.target as Node;
+      if (toolbarRef.current && toolbarRef.current.contains(target)) return;
+      const tile = (target as HTMLElement).closest?.(`[data-block-id="${selectedBlockId}"]`);
+      if (tile) return;
+      setSelectedBlockId(null);
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [selectedBlockId]);
 
   const handleUpdateBlock = useCallback(
     (blockId: string, content: Record<string, unknown>) => {
@@ -667,9 +681,7 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
       </p>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="relative" onClick={(e) => {
-          if ((e.target as HTMLElement) === e.currentTarget) setSelectedBlockId(null);
-        }}>
+        <div className="relative">
         <BentoGrid ref={gridRef} minExtraRows={2} blocks={topLevelBlocks}>
           <AnimatePresence>
             {topLevelBlocks.map((block) => (
@@ -719,15 +731,14 @@ export function EditorCanvas({ post, initialBlocks }: EditorCanvasProps) {
           const top = (L.rowStart - 1) * (gridMeta.rowHeight + gap) - 48;
           return (
             <div
-              className="pointer-events-none absolute z-30"
+              ref={toolbarRef}
+              className="absolute z-30"
               style={{ left, top }}
             >
-              <div className="pointer-events-auto">
-                <BlockStyleToolbar
-                  style={sel.style}
-                  onChange={(patch) => handleUpdateStyle(sel.id, patch)}
-                />
-              </div>
+              <BlockStyleToolbar
+                style={sel.style}
+                onChange={(patch) => handleUpdateStyle(sel.id, patch)}
+              />
             </div>
           );
         })()}

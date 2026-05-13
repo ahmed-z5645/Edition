@@ -5,6 +5,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import type { DesktopLayout, MobileLayout } from "@/lib/types/grid";
 import type { BlockStyle } from "@/lib/types/blocks";
+import { isDarkColor } from "@/lib/constants/colors";
 
 interface DraggableTileProps {
   id: string;
@@ -126,12 +127,18 @@ export function DraggableTile({
         ? "border border-accent"
         : "";
   const bgClass = bgColor ? "" : "bg-bg";
-  const mergedStyle = bgColor ? { ...style, backgroundColor: bgColor } : style;
+  const dark = isDarkColor(bgColor);
+  const mergedStyle = {
+    ...style,
+    ...(bgColor ? { backgroundColor: bgColor } : {}),
+    ...(dark ? { color: "#eff1f3" } : {}),
+  };
 
   return (
     <motion.div
       ref={setNodeRef}
       layout // Always on to maintain layout projection context
+      data-block-id={id}
       style={mergedStyle}
       onClick={(e) => {
         if (!onSelect) return;

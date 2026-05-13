@@ -19,8 +19,9 @@ export function BlockStyleToolbar({ style, onChange }: BlockStyleToolbarProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
       transition={{ duration: 0.15 }}
-      onClick={(e) => e.stopPropagation()}
+      data-block-style-toolbar="true"
       onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
       className="flex items-center gap-1 rounded-[12px] border border-primary bg-bg p-1.5 shadow-md"
     >
       <button

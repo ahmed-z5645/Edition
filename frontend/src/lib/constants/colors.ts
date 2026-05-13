@@ -10,3 +10,14 @@ export const COVER_COLORS = [
   "#c38d9e",
   "#659dbd",
 ] as const;
+
+const DARK_COLORS = new Set<string>([
+  "#223843",
+  "#4a7c59",
+  "#6b5b95",
+]);
+
+export function isDarkColor(hex: string | null | undefined): boolean {
+  if (!hex) return false;
+  return DARK_COLORS.has(hex.toLowerCase());
+}

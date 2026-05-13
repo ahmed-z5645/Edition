@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import type { DesktopLayout, MobileLayout } from "@/lib/types/grid";
 import type { BlockStyle } from "@/lib/types/blocks";
+import { isDarkColor } from "@/lib/constants/colors";
 
 interface BentoTileProps {
   desktopLayout: DesktopLayout;
@@ -56,6 +57,7 @@ export function BentoTile({
   const bgColor = blockStyle?.background_color;
   const borderClass = withBorder && !borderless ? "border border-primary" : "";
   const bgClass = bgColor ? "" : "bg-bg";
+  const dark = isDarkColor(bgColor);
 
   return (
     <div
@@ -64,6 +66,7 @@ export function BentoTile({
         gridColumn: `${desktopLayout.colStart} / span ${desktopLayout.colSpan}`,
         gridRow: `${desktopLayout.rowStart} / span ${effectiveRowSpan}`,
         ...(bgColor ? { backgroundColor: bgColor } : {}),
+        ...(dark ? { color: "#eff1f3" } : {}),
       }}
     >
       <div ref={contentRef} className={autoHeight ? "" : "h-full"}>{children}</div>
@@ -88,6 +91,7 @@ export function BentoTileMobile({
   const bgColor = blockStyle?.background_color;
   const borderClass = withBorder && !borderless ? "border border-primary" : "";
   const bgClass = bgColor ? "" : "bg-bg";
+  const dark = isDarkColor(bgColor);
 
   return (
     <div
@@ -96,6 +100,7 @@ export function BentoTileMobile({
         gridColumn: `${mobileLayout.colStart} / span ${mobileLayout.colSpan}`,
         gridRow: `${mobileLayout.rowStart} / span ${mobileLayout.rowSpan}`,
         ...(bgColor ? { backgroundColor: bgColor } : {}),
+        ...(dark ? { color: "#eff1f3" } : {}),
       }}
     >
       {children}
