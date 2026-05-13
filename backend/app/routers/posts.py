@@ -3,7 +3,7 @@ from supabase import Client
 from app.deps import get_db, get_authenticated_user
 from app.models.posts import PostResponse, PostCreate, PostUpdate
 from app.services.posts import calculate_word_count
-from app.services.weeks import get_edition_week, is_late_for_week, can_target_week
+from app.services.weeks import get_edition_week, is_late_for_week, can_target_week, is_revealed
 from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
@@ -144,8 +144,11 @@ async def get_post(
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Post not found")
-    if result.data["user_id"] != user_id and not result.data["is_published"]:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if result.data["user_id"] != user_id:
+        if not result.data["is_published"]:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        if not is_revealed(result.data["week_number"], result.data["year"]):
+            raise HTTPException(status_code=403, detail="Post not yet released")
 
     blocks = (
         db.table("blocks")
