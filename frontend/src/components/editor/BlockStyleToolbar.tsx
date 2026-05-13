@@ -22,7 +22,7 @@ export function BlockStyleToolbar({ style, onChange }: BlockStyleToolbarProps) {
       data-block-style-toolbar="true"
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
-      className="flex items-center gap-1 rounded-[12px] border border-primary bg-bg p-1.5 shadow-md"
+      className="flex items-center gap-2 rounded-[15px] border border-primary bg-bg p-2 shadow-md"
     >
       <button
         type="button"
@@ -53,12 +53,12 @@ export function BlockStyleToolbar({ style, onChange }: BlockStyleToolbarProps) {
         type="button"
         onClick={() => onChange({ borderless: !borderless })}
         title={borderless ? "Show border" : "Hide border"}
-        className={`flex size-6 items-center justify-center rounded-[6px] ${
-          borderless ? "bg-accent text-white" : "text-text/60 hover:bg-text/5"
+        className={`flex size-6 items-center justify-center rounded-[6px] hover:bg-text/10 ${
+          borderless ? "text-accent" : "text-text"
         }`}
       >
-        <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="4" y="4" width="16" height="16" rx="3" strokeDasharray="3 3" />
+        <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="4" strokeDasharray="4 3" />
         </svg>
       </button>
     </motion.div>
