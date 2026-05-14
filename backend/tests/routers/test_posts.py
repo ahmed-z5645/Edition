@@ -1,29 +1,37 @@
 import pytest
+from app.services.weeks import get_edition_week
 from tests.conftest import (
     TEST_USER_ID,
     OTHER_USER_ID,
     TEST_POST_ID,
-    SAMPLE_POST,
-    PUBLISHED_POST,
+    SAMPLE_POST as _SAMPLE_POST,
+    PUBLISHED_POST as _PUBLISHED_POST,
     SAMPLE_BLOCK,
 )
+
+# Pin SAMPLE_POST to the current edition week so can_target_week() permits
+# publish/create. Hardcoding a calendar week (as the conftest does) would
+# silently rot every Monday.
+_CW, _CY = get_edition_week()
+SAMPLE_POST = {**_SAMPLE_POST, "week_number": _CW, "year": _CY}
+PUBLISHED_POST = {**_PUBLISHED_POST, "week_number": _CW, "year": _CY}
 
 
 def test_create_post_new(client, mock_db):
     # No existing post for this week
     mock_db.set_response([])
     mock_db.set_response([SAMPLE_POST])
-    r = client.post("/api/posts", json={"week_number": 10, "year": 2025})
+    r = client.post("/api/posts", json={"week_number": _CW, "year": _CY})
     assert r.status_code == 200
     data = r.json()
     assert data["user_id"] == TEST_USER_ID
-    assert data["week_number"] == 10
+    assert data["week_number"] == _CW
 
 
 def test_create_post_idempotent(client, mock_db):
     # Existing post found → return it, no insert
     mock_db.set_response([SAMPLE_POST])
-    r = client.post("/api/posts", json={"week_number": 10, "year": 2025})
+    r = client.post("/api/posts", json={"week_number": _CW, "year": _CY})
     assert r.status_code == 200
     assert r.json()["id"] == TEST_POST_ID
     assert mock_db._last_insert is None  # no insert was made
@@ -112,3 +120,60 @@ def test_publish_post_success(client, mock_db):
     assert r.status_code == 200
     assert r.json()["is_published"] is True
     assert mock_db._last_update["is_published"] is True
+
+
+# ---------------------------------------------------------------------------
+# Publish validation edges — pin the contract before the cost refactor.
+# ---------------------------------------------------------------------------
+
+def test_publish_post_empty_string_title_rejected(client, mock_db):
+    empty_title = {**SAMPLE_POST, "title": ""}
+    mock_db.set_response([empty_title])
+    r = client.post(f"/api/posts/{TEST_POST_ID}/publish")
+    assert r.status_code == 400
+    assert "title" in r.json()["detail"].lower()
+
+
+def test_publish_post_whitespace_only_title_rejected(client, mock_db):
+    ws_title = {**SAMPLE_POST, "title": "   \t  "}
+    mock_db.set_response([ws_title])
+    r = client.post(f"/api/posts/{TEST_POST_ID}/publish")
+    assert r.status_code == 400
+    assert "title" in r.json()["detail"].lower()
+
+
+def test_publish_post_99_words_rejected(client, mock_db):
+    with_title = {**SAMPLE_POST, "title": "Almost"}
+    short_block = {**SAMPLE_BLOCK, "content": {"markdown": " ".join(["word"] * 99)}}
+    mock_db.set_response([with_title])
+    mock_db.set_response([short_block])
+    r = client.post(f"/api/posts/{TEST_POST_ID}/publish")
+    assert r.status_code == 400
+    assert "100 words" in r.json()["detail"]
+    assert "99" in r.json()["detail"]
+
+
+def test_publish_post_exactly_100_words_accepted(client, mock_db):
+    with_title = {**SAMPLE_POST, "title": "Exactly Enough"}
+    block_100 = {**SAMPLE_BLOCK, "content": {"markdown": " ".join(["word"] * 100)}}
+    published = {**with_title, "is_published": True, "word_count": 100}
+    mock_db.set_response([with_title])
+    mock_db.set_response([block_100])
+    mock_db.set_response([published])
+    r = client.post(f"/api/posts/{TEST_POST_ID}/publish")
+    assert r.status_code == 200
+    assert mock_db._last_update["word_count"] == 100
+
+
+def test_publish_post_word_count_sums_across_multiple_markdown_blocks(client, mock_db):
+    with_title = {**SAMPLE_POST, "title": "Multi-block"}
+    block_a = {**SAMPLE_BLOCK, "id": "b-a", "content": {"markdown": " ".join(["word"] * 60)}}
+    block_b = {**SAMPLE_BLOCK, "id": "b-b", "content": {"markdown": " ".join(["word"] * 41)}}
+    published = {**with_title, "is_published": True, "word_count": 101}
+    mock_db.set_response([with_title])
+    # calculate_word_count makes one query that returns ALL markdown blocks for the post
+    mock_db.set_response([block_a, block_b])
+    mock_db.set_response([published])
+    r = client.post(f"/api/posts/{TEST_POST_ID}/publish")
+    assert r.status_code == 200
+    assert mock_db._last_update["word_count"] == 101

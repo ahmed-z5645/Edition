@@ -201,7 +201,7 @@ async def publish_post(
             detail="This week is closed — it cannot be published.",
         )
 
-    if not post.data.get("title"):
+    if not (post.data.get("title") or "").strip():
         raise HTTPException(status_code=400, detail="Post must have a title")
 
     word_count = calculate_word_count(db, post_id)
